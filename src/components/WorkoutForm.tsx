@@ -10,7 +10,11 @@ interface WorkoutFormData {
     duration: number
 }
 
-export default function WorkoutForm() {
+interface WorkoutFormProps {
+    onPlaylistCreated?: (playlist: any) => void
+}
+
+export default function WorkoutForm({ onPlaylistCreated }: WorkoutFormProps) {
     const { user, logout } = useAuth()
     const [formData, setFormData] = useState<WorkoutFormData>({
         intensity: 'medium',
@@ -30,14 +34,38 @@ export default function WorkoutForm() {
         e.preventDefault()
         setIsSubmitting(true)
 
-        // For now, just log the data
-        console.log('Workout Form Data:', formData)
+        try {
+            const response = await fetch('/api/create-playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    intensity: formData.intensity,
+                    duration: formData.duration,
+                    accessToken: user?.access_token,
+                    userId: user?.id
+                })
+            })
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
+            if (!response.ok) {
+                throw new Error('Failed to create playlist')
+            }
 
-        alert(`Creating ${formData.intensity} intensity playlist for ${formData.duration} minutes!`)
-        setIsSubmitting(false)
+            const result = await response.json()
+
+            if (result.success) {
+                // Pass the playlist result to parent component
+                onPlaylistCreated?.(result.playlist)
+            } else {
+                throw new Error(result.error || 'Failed to create playlist')
+            }
+        } catch (error) {
+            console.error('Error creating playlist:', error)
+            alert('Sorry, there was an error creating your playlist. Please try again.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const intensityOptions = [
