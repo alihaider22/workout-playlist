@@ -1,11 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import WorkoutForm from '@/components/WorkoutForm'
 import LoginPage from '@/components/LoginPage'
+import PlaylistResult from '@/components/PlaylistResult'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 
 function AppContent() {
   const { user, isLoading } = useAuth()
+  const [createdPlaylist, setCreatedPlaylist] = useState<any>(null)
+
+  const handlePlaylistCreated = (playlist: any) => {
+    setCreatedPlaylist(playlist)
+  }
+
+  const handleCreateAnother = () => {
+    setCreatedPlaylist(null)
+  }
 
   if (isLoading) {
     return (
@@ -18,7 +29,20 @@ function AppContent() {
     )
   }
 
-  return user ? <WorkoutForm /> : <LoginPage />
+  if (!user) {
+    return <LoginPage />
+  }
+
+  if (createdPlaylist) {
+    return (
+      <PlaylistResult
+        playlist={createdPlaylist}
+        onCreateAnother={handleCreateAnother}
+      />
+    )
+  }
+
+  return <WorkoutForm onPlaylistCreated={handlePlaylistCreated} />
 }
 
 export default function Home() {
